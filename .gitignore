@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+*.tgz
+.DS_Store
+.env*
+.hermes/
+.agents/
+skills-lock.json

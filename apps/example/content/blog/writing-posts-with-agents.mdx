@@ -1,0 +1,37 @@
+---
+title: Writing posts with agents
+date: 2026-09-24
+description: Agents write straight into the repo. The frontmatter rules fit on one screen, and the build checks them.
+author: VibeLabs
+---
+
+`npx vibeblog init` drops an `AGENTS.md` next to the posts. It lists the frontmatter fields, the allowed components and the slug rules. That's all an agent needs to write a post that builds.
+
+## Frontmatter
+
+```yaml
+---
+title: Writing posts with agents   # required
+date: 2026-09-24                   # required, YYYY-MM-DD
+description: One sentence.         # used for the list, SEO and RSS
+image: /blog/cover.png             # optional
+draft: true                        # hidden in production
+---
+```
+
+The file name is the slug. `writing-posts-with-agents.mdx` becomes `/blog/writing-posts-with-agents`. Uppercase letters or spaces fail the build with a clear message.
+
+## Review checklist
+
+- [x] Title and description are set
+- [x] Date is `YYYY-MM-DD`
+- [x] Every code fence names its language
+- [ ] Someone read it before `draft: true` came off
+
+<Callout type="warning" title="Drafts">
+  Drafts show up in `next dev` with a badge and disappear from production builds, RSS and the sitemap. Agents should start with `draft: true`.
+</Callout>
+
+## Why no CMS
+
+A CMS adds a login, a database and a second place where content lives. When agents do the writing, git already covers what a CMS would offer: history, review through pull requests, and rollback with `git revert`.

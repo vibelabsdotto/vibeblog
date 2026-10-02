@@ -1,0 +1,78 @@
+---
+title: Markdown reference
+date: 2026-09-10
+description: Every element the default theme styles, on one page. Useful when you restyle the blog for a new site.
+---
+
+This page exists to check the styles. Paragraphs come first. Text can be **bold**, *italic*, ~~struck through~~ or `inline code`. Links go [inside the site](/blog) or [somewhere else](https://nextjs.org).
+
+## Lists
+
+1. Ordered lists count up
+2. They can nest
+   - Unordered inside ordered
+   - Still readable
+3. And continue afterwards
+
+- Unordered lists use the muted marker color
+- Long items wrap without breaking the indent, which matters once a sentence runs over two lines on a phone.
+
+## Quotes
+
+> Simple systems are easier to change than clever ones.
+
+## Code
+
+TypeScript:
+
+```ts
+type Post = { slug: string; date: string };
+
+export function newest(posts: Post[]): Post | undefined {
+  return [...posts].sort((a, b) => b.date.localeCompare(a.date))[0];
+}
+```
+
+Python:
+
+```python
+def reading_time(words: int, wpm: int = 220) -> int:
+    return max(1, round(words / wpm))
+```
+
+JSON:
+
+```json
+{ "name": "@vibelabsdotto/blog", "type": "module" }
+```
+
+A fence without a language renders as plain text:
+
+```
+No language, no colors.
+```
+
+## Tables
+
+| Language | Fence | Highlighted |
+| --- | --- | ---: |
+| TypeScript | `ts`, `tsx` | yes |
+| Shell | `bash`, `sh`, `zsh` | yes |
+| SQL | `sql` | yes |
+| Unknown | anything else | as plain text |
+
+## Callouts
+
+<Callout>A note without a title.</Callout>
+
+<Callout type="tip" title="Tip">Tips get a green edge.</Callout>
+
+<Callout type="warning" title="Warning">Warnings get an amber edge.</Callout>
+
+---
+
+## Footnotes
+
+GFM footnotes work too.[^1]
+
+[^1]: They collect at the end of the post.

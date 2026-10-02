@@ -1,0 +1,60 @@
+---
+title: How this blog works
+date: 2026-10-02
+description: One npm package, five route files and a folder of MDX. No CMS, no database, no build plugin.
+image: /blog/how-this-blog-works.svg
+author: VibeLabs
+---
+
+This blog is a normal Next.js App Router site. Everything below `/blog` comes from `@vibelabsdotto/blog`. The site itself owns a config file, a few route files that re-export from the package, and a folder of posts.
+
+## The config
+
+One call creates the blog. The returned object has every page, the metadata functions, the RSS handler and the sitemap entries.
+
+```ts
+import { createBlog } from "@vibelabsdotto/blog";
+
+export const blog = createBlog({
+  siteUrl: "https://example.com",
+  basePath: "/blog",
+  contentDir: "content/blog",
+  locale: "en",
+});
+```
+
+## The route files
+
+Next.js only creates a route when a file exists in `app/`. A package in `node_modules` can't add one, so each route is a re-export:
+
+```tsx
+// app/blog/[slug]/page.tsx
+import { blog } from "@/lib/blog";
+
+export const dynamicParams = false;
+export const generateStaticParams = blog.generateStaticParams;
+export const generateMetadata = blog.generateMetadata;
+export default blog.PostPage;
+```
+
+You don't write these by hand. The CLI does it:
+
+```bash
+npm install @vibelabsdotto/blog
+npx vibeblog init --site-url https://example.com
+```
+
+<Callout type="tip" title="Updates">
+  Because the route files only re-export, a fix in the package reaches every site with `npm update`. Nothing gets copied into the site.
+</Callout>
+
+## What happens at build time
+
+| Step | Where | Output |
+| --- | --- | --- |
+| Read `*.mdx` and validate frontmatter | `generateStaticParams` | One route per post |
+| Compile MDX on the server | `PostPage` | Static HTML, zero client JS for content |
+| Highlight code with sugar-high | `pre` component | Inline spans, colored by CSS variables |
+| Write `rss.xml` and sitemap entries | Route handler, `sitemap.ts` | Static files |
+
+A post with a broken date or invalid MDX stops `next build` and prints the file name. Nothing half-rendered goes live.
