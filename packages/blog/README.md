@@ -133,4 +133,4 @@ Prose rules use `:where()`, so a single class in your CSS beats them.
 
 ## Develop
 
-This package lives in the [vibeblog monorepo](../../). `npm run dev` at the root builds the package and starts the example app on port 3077.
+This package lives in the [vibeblog monorepo](https://github.com/vibelabsdotto/vibeblog). `npm run dev` at the root builds the package and starts the example app on port 3077.

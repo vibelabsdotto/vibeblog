@@ -4,6 +4,13 @@
   "description": "Drop-in MDX blog for Next.js App Router sites.",
   "license": "MIT",
   "author": "VibeLabs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vibelabsdotto/vibeblog.git",
+    "directory": "packages/blog"
+  },
+  "homepage": "https://github.com/vibelabsdotto/vibeblog/tree/main/packages/blog#readme",
+  "bugs": "https://github.com/vibelabsdotto/vibeblog/issues",
   "type": "module",
   "sideEffects": [
     "*.css"
@@ -41,6 +48,7 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
+    "prepublishOnly": "npm run typecheck && npm run build",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
