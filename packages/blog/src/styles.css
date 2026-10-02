@@ -12,7 +12,12 @@
   --vb-surface: var(--muted, color-mix(in oklab, currentColor 5%, transparent));
   --vb-link: var(--primary, currentColor);
   --vb-radius: var(--radius, 0.625rem);
-  --vb-width: 44rem;
+  /* Text column. Index and article share it, so both line up with a header of the same width. */
+  --vb-width: 41rem;
+  --vb-gutter: 1.5rem;
+  --vb-sidebar-width: 15rem;
+  /* Distance of the sticky sidebar from the viewport top. Raise it under a sticky site header. */
+  --vb-sticky-top: 2rem;
   --vb-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
 
   /* sugar-high tokens. Mid-lightness hues stay readable on light and dark backgrounds. */
@@ -28,9 +33,9 @@
 
   box-sizing: border-box;
   width: 100%;
-  max-width: var(--vb-width);
+  max-width: calc(var(--vb-width) + 2 * var(--vb-gutter));
   margin-inline: auto;
-  padding: 4rem 1.5rem 6rem;
+  padding: 4rem var(--vb-gutter) 6rem;
   color: var(--vb-fg);
 }
 
@@ -144,6 +149,172 @@
   }
 }
 
+/* Post layout. The article keeps the index column; the sidebar sits in the right margin. */
+
+.vb-root.vb-post {
+  max-width: none;
+}
+
+.vb-post-grid {
+  display: grid;
+  grid-template-columns: minmax(0, var(--vb-width));
+  justify-content: center;
+}
+
+.vb-sidebar-heading {
+  margin: 0 0 0.75rem;
+  color: var(--vb-fg);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.vb-sidebar ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Without room for a sidebar: no table of contents, more posts below the article. */
+.vb-toc {
+  display: none;
+}
+
+.vb-more {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--vb-border);
+}
+
+.vb-more li + li {
+  margin-top: 0.25rem;
+}
+
+.vb-more a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.5rem 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.vb-more a span {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+.vb-more a:hover span {
+  text-decoration-line: underline;
+}
+
+.vb-more time {
+  color: var(--vb-muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.vb-toc ul {
+  border-left: 1px solid var(--vb-border);
+}
+
+.vb-toc a {
+  display: block;
+  margin-left: -1px;
+  padding: 0.3125rem 0 0.3125rem 0.875rem;
+  border-left: 2px solid transparent;
+  color: var(--vb-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.vb-toc li[data-depth="3"] a {
+  padding-left: 1.75rem;
+}
+
+.vb-toc a:hover {
+  color: var(--vb-fg);
+}
+
+.vb-toc a[aria-current] {
+  border-left-color: var(--vb-fg);
+  color: var(--vb-fg);
+  font-weight: 500;
+}
+
+/* The left column mirrors the sidebar so the article stays centered. When space runs out it
+   shrinks first and the article moves left, keeping the sidebar at least 13rem wide. */
+@media (min-width: 64rem) {
+  .vb-post-grid {
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, var(--vb-width))
+      minmax(13rem, 1fr);
+    column-gap: 4rem;
+  }
+
+  .vb-article {
+    grid-column: 2;
+  }
+
+  .vb-sidebar {
+    grid-column: 3;
+  }
+
+  .vb-sidebar-inner {
+    position: sticky;
+    top: var(--vb-sticky-top);
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    max-width: var(--vb-sidebar-width);
+    max-height: calc(100vh - 2 * var(--vb-sticky-top));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .vb-toc {
+    display: block;
+  }
+
+  .vb-more {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  /* Same rail as the table of contents, so the sidebar has one text edge. */
+  .vb-more ul {
+    border-left: 1px solid var(--vb-border);
+  }
+
+  .vb-more li + li {
+    margin-top: 0;
+  }
+
+  .vb-more a {
+    padding: 0.3125rem 0 0.3125rem 0.875rem;
+  }
+
+  .vb-more a span {
+    color: var(--vb-muted);
+    font-size: 0.8125rem;
+    font-weight: 400;
+  }
+
+  .vb-more a:hover span {
+    color: var(--vb-fg);
+  }
+
+  .vb-more time {
+    font-size: 0.75rem;
+  }
+}
+
 /* Post */
 
 .vb-back {
@@ -206,6 +377,11 @@
 
 .vb-prose > :first-child {
   margin-top: 0;
+}
+
+/* Two framed boxes in a row need more air than text does. */
+.vb-prose :where(.vb-code, .vb-callout, .vb-table) + :where(.vb-code, .vb-callout) {
+  margin-top: 1.75em;
 }
 
 .vb-prose :where(h2, h3, h4) {
@@ -316,45 +492,99 @@
   font-size: 0.85em;
 }
 
+/* Code card: top bar with file name or language and a copy button, code below. */
+
 .vb-code {
-  position: relative;
+  margin-inline: 0;
+  overflow: hidden;
+  border: 1px solid var(--vb-border);
+  border-radius: var(--vb-radius);
+  background: var(--vb-surface);
+}
+
+.vb-code-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  padding: 0.125rem 0.375rem 0.125rem 1.25rem;
+  border-bottom: 1px solid var(--vb-border);
+  background: color-mix(in oklab, var(--vb-fg) 4%, transparent);
+  color: var(--vb-muted);
+  font-family: var(--vb-mono);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.vb-code-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--vb-fg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Always right-aligned next to the copy button, with or without a file name. */
+.vb-code-lang {
+  margin-left: auto;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.vb-copy {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--vb-radius) * 0.6);
+  background: transparent;
+  color: var(--vb-muted);
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.vb-copy:hover {
+  background: color-mix(in oklab, var(--vb-fg) 8%, transparent);
+  color: var(--vb-fg);
+}
+
+.vb-copy:focus-visible {
+  outline: 2px solid var(--ring, var(--vb-fg));
+  outline-offset: -2px;
+}
+
+.vb-copy[data-copied] {
+  color: oklch(0.6 0.13 155);
+}
+
+.vb-copy-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .vb-code pre {
   margin: 0;
   padding: 1rem 1.25rem;
   overflow-x: auto;
-  border: 1px solid var(--vb-border);
-  border-radius: var(--vb-radius);
-  background: var(--vb-surface);
   font-family: var(--vb-mono);
   font-size: 0.875rem;
   line-height: 1.7;
   tab-size: 2;
 }
 
-/* The label gets its own row so horizontally scrolled code never slides under it. */
-.vb-code:has(.vb-code-lang) pre {
-  padding-top: 2.125rem;
-}
-
 /* sugar-high's shell grammar colors URLs and flags like code. Keep commands plain. */
 .vb-code[data-lang="shell"] {
   --sh-sign: var(--sh-identifier);
   --sh-property: var(--sh-identifier);
-}
-
-.vb-code-lang {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.75rem;
-  color: var(--vb-muted);
-  font-family: var(--vb-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  user-select: none;
-  pointer-events: none;
 }
 
 .vb-table {
@@ -382,6 +612,10 @@
 
 .vb-table :where(th:first-child, td:first-child) {
   padding-left: 0;
+}
+
+.vb-table :where(th:last-child, td:last-child) {
+  padding-right: 0;
 }
 
 /* Tinted by type so callouts never read as code blocks. */
@@ -419,8 +653,26 @@
   margin-top: 0;
 }
 
+.vb-callout :where(code) {
+  border-color: color-mix(in oklab, var(--vb-accent) 30%, transparent);
+  background: color-mix(in oklab, var(--vb-accent) 10%, transparent);
+}
+
 .vb-prose :where(.footnotes) {
   margin-top: 3em;
   color: var(--vb-muted);
   font-size: 0.875em;
+}
+
+/* remark-gfm marks the footnote heading sr-only. Hide it without relying on Tailwind. */
+.vb-prose .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }

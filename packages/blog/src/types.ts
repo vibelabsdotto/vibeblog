@@ -9,6 +9,12 @@ export type BlogLabels = {
   rss: string;
   readingTime: (minutes: number) => string;
   noPosts: string;
+  onThisPage: string;
+  morePosts: string;
+  copy: string;
+  copied: string;
+  /** Shown in the code bar when a fence has no language. */
+  plainText: string;
 };
 
 export type BlogConfig = {
@@ -28,21 +34,27 @@ export type BlogConfig = {
   labels?: Partial<BlogLabels>;
   /** Fallback author for JSON-LD and RSS when a post has none. */
   author?: string;
+  /** Post sidebar with table of contents and more posts. Default: `true`. */
+  sidebar?: boolean;
   /** Extra or replacement MDX components. Merged over the defaults. */
   components?: MDXComponents;
   /** Appended to the built-in remark-gfm plugin. */
   remarkPlugins?: MdxOptions["remarkPlugins"];
-  /** Appended to the built-in rehype-slug plugin. */
+  /** Run after the built-in rehype-slug and table-of-contents plugins. */
   rehypePlugins?: MdxOptions["rehypePlugins"];
 };
 
 export type ResolvedBlogConfig = Required<
-  Pick<BlogConfig, "siteUrl" | "basePath" | "contentDir" | "title" | "description" | "locale">
+  Pick<
+    BlogConfig,
+    "siteUrl" | "basePath" | "contentDir" | "title" | "description" | "locale" | "sidebar"
+  >
 > & {
   labels: BlogLabels;
   author?: string;
   components: MDXComponents;
   remarkPlugins: NonNullable<MdxOptions["remarkPlugins"]>;
+  /** User plugins only. The built-in ones are added per render. */
   rehypePlugins: NonNullable<MdxOptions["rehypePlugins"]>;
 };
 

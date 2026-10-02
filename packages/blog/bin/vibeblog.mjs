@@ -167,9 +167,10 @@ draft: true                  # optional, hidden from production builds
 ## Body
 
 - Start with text, not with an \`# h1\`. The page renders the title.
-- Use \`##\` and \`###\` for sections. They get anchor links.
+- Use \`##\` and \`###\` for sections. They get anchor links and fill the table of contents in the sidebar.
 - Markdown, GFM tables, task lists and footnotes work.
-- Fenced code blocks get syntax highlighting. Always set the language: \`\`\`ts, \`\`\`bash, \`\`\`json.
+- Fenced code blocks get syntax highlighting and a copy button. Always set the language: \`\`\`ts, \`\`\`bash, \`\`\`json.
+- Show a file name in the code card's top bar with \`title\`: \`\`\`ts title="lib/blog.ts".
 - Available components: \`<Callout type="note|tip|warning" title="Optional">Text</Callout>\`.
 - \`import\` and \`export\` are disabled. Put images in \`public/\` and reference them by path.
 

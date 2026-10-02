@@ -23,6 +23,8 @@ This page exists to check the styles. Paragraphs come first. Text can be **bold*
 
 ## Code
 
+### Languages
+
 TypeScript:
 
 ```ts
@@ -46,10 +48,21 @@ JSON:
 { "name": "@vibelabsdotto/blog", "type": "module" }
 ```
 
-A fence without a language renders as plain text:
+### Plain text and file names
+
+A fence without a language renders as plain text and still gets the copy button:
 
 ```
 No language, no colors.
+```
+
+Add `title="path/to/file"` after the language to show a file name in the top bar:
+
+```css title="app/globals.css"
+.vb-root {
+  --vb-width: 48rem;
+  --vb-link: oklch(0.55 0.2 260);
+}
 ```
 
 ## Tables

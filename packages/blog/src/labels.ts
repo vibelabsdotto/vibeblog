@@ -6,6 +6,11 @@ const en: BlogLabels = {
   rss: "RSS",
   readingTime: (minutes) => `${minutes} min read`,
   noPosts: "No posts yet.",
+  onThisPage: "On this page",
+  morePosts: "More posts",
+  copy: "Copy code",
+  copied: "Copied",
+  plainText: "text",
 };
 
 const de: BlogLabels = {
@@ -14,6 +19,11 @@ const de: BlogLabels = {
   rss: "RSS",
   readingTime: (minutes) => `${minutes} Min. Lesezeit`,
   noPosts: "Noch keine Beiträge.",
+  onThisPage: "Auf dieser Seite",
+  morePosts: "Weitere Beiträge",
+  copy: "Code kopieren",
+  copied: "Kopiert",
+  plainText: "text",
 };
 
 export function resolveLabels(locale: string, overrides?: Partial<BlogLabels>): BlogLabels {

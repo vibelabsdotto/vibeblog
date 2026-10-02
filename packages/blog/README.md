@@ -1,11 +1,13 @@
 # @vibelabsdotto/blog
 
-Drop-in MDX blog for Next.js App Router sites. Posts are `.mdx` files in your repo. The package renders them on the server, so post content ships no client JavaScript.
+Drop-in MDX blog for Next.js App Router sites. Posts are `.mdx` files in your repo. The package renders them on the server. The only client JavaScript is the copy button and the active table-of-contents entry (3.5 kB).
 
 - Index and post pages, statically generated
 - Frontmatter validation that fails the build with the file name
 - SEO metadata, Open Graph, JSON-LD, canonical URLs
 - RSS feed and sitemap entries
+- Post sidebar with a table of contents that follows the scroll position, plus more posts
+- Code cards with a top bar: file name, language and a copy button
 - Syntax highlighting with [sugar-high](https://github.com/huozhi/sugar-high), GFM tables, task lists, footnotes
 - Drafts visible in `next dev`, removed from production builds
 - Inherits your shadcn theme (light and dark) through CSS variables
@@ -63,10 +65,11 @@ export const blog = createBlog({
   description: "What this blog is about.",
   locale: "en",                   // "en" and "de" labels ship; dates use Intl
   author: "Jane Doe",             // fallback for posts without an author
+  sidebar: true,                  // table of contents + more posts on post pages
   labels: { allPosts: "Back" },   // override single strings
   components: { Video },          // extra MDX components, or replace defaults
   remarkPlugins: [],              // appended to remark-gfm
-  rehypePlugins: [],              // appended to rehype-slug
+  rehypePlugins: [],              // run after rehype-slug and the TOC plugin
 });
 ```
 
@@ -97,6 +100,18 @@ Text starts here. The page renders the title, so skip the `# h1`.
 <Callout type="tip" title="Optional">note, tip or warning</Callout>
 ```
 
+Code fences take an optional file name for the top bar:
+
+````mdx
+```ts title="lib/blog.ts"
+export const blog = createBlog({ siteUrl: "https://example.com" });
+```
+````
+
+## Sidebar
+
+From 64rem viewport width, post pages show a sticky sidebar in the right margin. It has the `##`/`###` headings of the post (when there are at least two) and up to four other posts. The article keeps the same column and position as without a sidebar. On narrower screens the table of contents is hidden and "More posts" moves below the article. Turn it off with `sidebar: false`.
+
 `import` and `export` inside posts are disabled. Register components through `components` in the config instead.
 
 ## Styling
@@ -107,8 +122,9 @@ To restyle, override variables on `.vb-root`:
 
 ```css
 .vb-root {
-  --vb-width: 48rem;
+  --vb-width: 48rem;          /* text column */
   --vb-link: oklch(0.55 0.2 260);
+  --vb-sticky-top: 5rem;      /* sidebar offset, e.g. below a sticky site header */
   --sh-keyword: #d73a49;
 }
 ```

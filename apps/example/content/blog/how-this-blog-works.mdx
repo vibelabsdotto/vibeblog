@@ -12,7 +12,7 @@ This blog is a normal Next.js App Router site. Everything below `/blog` comes fr
 
 One call creates the blog. The returned object has every page, the metadata functions, the RSS handler and the sitemap entries.
 
-```ts
+```ts title="lib/blog.ts"
 import { createBlog } from "@vibelabsdotto/blog";
 
 export const blog = createBlog({
@@ -27,8 +27,7 @@ export const blog = createBlog({
 
 Next.js only creates a route when a file exists in `app/`. A package in `node_modules` can't add one, so each route is a re-export:
 
-```tsx
-// app/blog/[slug]/page.tsx
+```tsx title="app/blog/[slug]/page.tsx"
 import { blog } from "@/lib/blog";
 
 export const dynamicParams = false;
@@ -37,14 +36,14 @@ export const generateMetadata = blog.generateMetadata;
 export default blog.PostPage;
 ```
 
-You don't write these by hand. The CLI does it:
+You don't write these by hand. The CLI does it. Every code block has a copy button in its top bar:
 
 ```bash
 npm install @vibelabsdotto/blog
 npx vibeblog init --site-url https://example.com
 ```
 
-<Callout type="tip" title="Updates">
+<Callout type="tip" title="One update for every site">
   Because the route files only re-export, a fix in the package reaches every site with `npm update`. Nothing gets copied into the site.
 </Callout>
 

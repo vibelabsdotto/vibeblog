@@ -1,7 +1,8 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["src/index.tsx"],
+  // client.tsx stays a separate file so its "use client" directive survives bundling.
+  entry: ["src/index.tsx", "src/client.tsx"],
   format: "esm",
   platform: "node",
   fixedExtension: false,

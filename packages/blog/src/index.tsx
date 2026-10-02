@@ -6,14 +6,19 @@ import type { ReactNode } from "react";
 import { evaluate } from "next-mdx-remote-client/rsc";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
+import { TocList } from "./client";
 import { createPostStore } from "./content";
 import { formatDate, resolveLabels } from "./labels";
-import { defaultComponents } from "./mdx-components";
+import { createComponents } from "./mdx-components";
+import { rehypeVibeblog, type TocItem } from "./rehype";
 import { indexMetadata, postJsonLd, postMetadata, renderRss, sitemapEntries } from "./seo";
 import type { BlogConfig, Post, ResolvedBlogConfig, SlugParams } from "./types";
 
 export { Callout, type CalloutProps } from "./mdx-components";
+export type { TocItem } from "./rehype";
 export type { BlogConfig, BlogLabels, Post, PostFrontmatter } from "./types";
+
+const MORE_POSTS = 4;
 
 function resolveConfig(config: BlogConfig): ResolvedBlogConfig {
   let siteUrl: string;
@@ -29,6 +34,7 @@ function resolveConfig(config: BlogConfig): ResolvedBlogConfig {
   }
 
   const locale = config.locale ?? "en";
+  const labels = resolveLabels(locale, config.labels);
   return {
     siteUrl,
     basePath,
@@ -36,11 +42,12 @@ function resolveConfig(config: BlogConfig): ResolvedBlogConfig {
     title: config.title ?? "Blog",
     description: config.description ?? "",
     locale,
-    labels: resolveLabels(locale, config.labels),
+    sidebar: config.sidebar ?? true,
+    labels,
     author: config.author,
-    components: { ...defaultComponents, ...config.components },
+    components: { ...createComponents(labels), ...config.components },
     remarkPlugins: [remarkGfm, ...(config.remarkPlugins ?? [])],
-    rehypePlugins: [rehypeSlug, ...(config.rehypePlugins ?? [])],
+    rehypePlugins: config.rehypePlugins ?? [],
   };
 }
 
@@ -59,7 +66,7 @@ export function createBlog(input: BlogConfig) {
   function IndexPage(): ReactNode {
     const posts = store.getPosts();
     return (
-      <div className="vb-root">
+      <div className="vb-root vb-index">
         <header className="vb-header">
           <h1 className="vb-title">{config.title}</h1>
           {config.description ? <p className="vb-description">{config.description}</p> : null}
@@ -93,9 +100,49 @@ export function createBlog(input: BlogConfig) {
     );
   }
 
+  function Sidebar({ post, toc }: { post: Post; toc: TocItem[] }): ReactNode {
+    const others = store
+      .getPosts()
+      .filter((other) => other.slug !== post.slug)
+      .slice(0, MORE_POSTS);
+    // A single heading is not worth a table of contents.
+    const showToc = toc.length > 1;
+    if (!showToc && others.length === 0) return null;
+
+    return (
+      <aside className="vb-sidebar">
+        <div className="vb-sidebar-inner">
+          {showToc ? (
+            <nav className="vb-toc" aria-label={labels.onThisPage}>
+              <p className="vb-sidebar-heading">{labels.onThisPage}</p>
+              <TocList items={toc} />
+            </nav>
+          ) : null}
+          {others.length > 0 ? (
+            <nav className="vb-more" aria-label={labels.morePosts}>
+              <p className="vb-sidebar-heading">{labels.morePosts}</p>
+              <ul>
+                {others.map((other) => (
+                  <li key={other.slug}>
+                    <Link href={other.path}>
+                      <span>{other.title}</span>
+                      <time dateTime={other.date}>{formatDate(other.date, config.locale)}</time>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ) : null}
+        </div>
+      </aside>
+    );
+  }
+
   async function PostPage({ params }: SlugParams): Promise<ReactNode> {
     const post = await findPost(params);
 
+    // Filled by rehypeVibeblog while this post compiles.
+    const toc: TocItem[] = [];
     const { content, error } = await evaluate({
       source: post.source,
       components: config.components,
@@ -104,7 +151,7 @@ export function createBlog(input: BlogConfig) {
         disableExports: true,
         mdxOptions: {
           remarkPlugins: config.remarkPlugins,
-          rehypePlugins: config.rehypePlugins,
+          rehypePlugins: [rehypeSlug, [rehypeVibeblog, { toc }], ...config.rehypePlugins],
         },
       },
     });
@@ -112,29 +159,34 @@ export function createBlog(input: BlogConfig) {
     if (error) throw new Error(`[vibeblog] ${post.file}: ${error.message}`, { cause: error });
 
     return (
-      <article className="vb-root">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: postJsonLd(post, config) }}
-        />
-        <Link href={config.basePath} className="vb-back">
-          ← {labels.allPosts}
-        </Link>
-        <header className="vb-post-header">
-          <h1 className="vb-title">{post.title}</h1>
-          <div className="vb-meta">
-            <time dateTime={post.date}>{formatDate(post.date, config.locale)}</time>
-            <span aria-hidden>·</span>
-            <span>{labels.readingTime(post.readingMinutes)}</span>
-            {post.draft ? <span className="vb-badge">{labels.draft}</span> : null}
-          </div>
-        </header>
-        {post.image ? (
-          // eslint-disable-next-line @next/next/no-img-element -- cover dimensions are unknown.
-          <img className="vb-cover" src={post.image} alt="" />
-        ) : null}
-        <div className="vb-prose">{content}</div>
-      </article>
+      <div className="vb-root vb-post">
+        <div className="vb-post-grid">
+          <article className="vb-article">
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: postJsonLd(post, config) }}
+            />
+            <Link href={config.basePath} className="vb-back">
+              ← {labels.allPosts}
+            </Link>
+            <header className="vb-post-header">
+              <h1 className="vb-title">{post.title}</h1>
+              <div className="vb-meta">
+                <time dateTime={post.date}>{formatDate(post.date, config.locale)}</time>
+                <span aria-hidden>·</span>
+                <span>{labels.readingTime(post.readingMinutes)}</span>
+                {post.draft ? <span className="vb-badge">{labels.draft}</span> : null}
+              </div>
+            </header>
+            {post.image ? (
+              // eslint-disable-next-line @next/next/no-img-element -- cover dimensions are unknown.
+              <img className="vb-cover" src={post.image} alt="" />
+            ) : null}
+            <div className="vb-prose">{content}</div>
+          </article>
+          {config.sidebar ? <Sidebar post={post} toc={toc} /> : null}
+        </div>
+      </div>
     );
   }
 
