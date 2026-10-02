@@ -11,14 +11,27 @@ import { createPostStore } from "./content";
 import { formatDate, resolveLabels } from "./labels";
 import { createComponents } from "./mdx-components";
 import { rehypeVibeblog, type TocItem } from "./rehype";
-import { indexMetadata, postJsonLd, postMetadata, renderRss, sitemapEntries } from "./seo";
-import type { BlogConfig, Post, ResolvedBlogConfig, SlugParams } from "./types";
+import {
+  absoluteUrl,
+  indexMetadata,
+  postJsonLd,
+  postMetadata,
+  renderRss,
+  sitemapEntries,
+} from "./seo";
+import type { BlogConfig, BlogCta, Post, ResolvedBlogConfig, SlugParams } from "./types";
 
 export { Callout, type CalloutProps } from "./mdx-components";
 export type { TocItem } from "./rehype";
-export type { BlogConfig, BlogLabels, Post, PostFrontmatter } from "./types";
+export type { BlogConfig, BlogCta, BlogLabels, Post, PostFrontmatter } from "./types";
 
 const MORE_POSTS = 4;
+/**
+ * Returned by generateStaticParams while no post is published. With `cacheComponents` Next
+ * rejects an empty list; the placeholder renders a 404. Slugs are validated, so no post can
+ * collide with it.
+ */
+const EMPTY_SLUG = "_";
 
 function resolveConfig(config: BlogConfig): ResolvedBlogConfig {
   let siteUrl: string;
@@ -45,6 +58,8 @@ function resolveConfig(config: BlogConfig): ResolvedBlogConfig {
     sidebar: config.sidebar ?? true,
     labels,
     author: config.author,
+    ogImage: config.ogImage ? absoluteUrl(config.ogImage, siteUrl) : undefined,
+    cta: config.cta,
     components: { ...createComponents(labels), ...config.components },
     remarkPlugins: [remarkGfm, ...(config.remarkPlugins ?? [])],
     rehypePlugins: config.rehypePlugins ?? [],
@@ -97,6 +112,26 @@ export function createBlog(input: BlogConfig) {
           <a href={`${config.basePath}/rss.xml`}>{labels.rss}</a>
         </footer>
       </div>
+    );
+  }
+
+  function Cta({ cta }: { cta: BlogCta }): ReactNode {
+    return (
+      <aside className="vb-cta">
+        <div className="vb-cta-copy">
+          <p className="vb-cta-title">{cta.title}</p>
+          {cta.text ? <p className="vb-cta-text">{cta.text}</p> : null}
+        </div>
+        {cta.href.startsWith("/") ? (
+          <Link href={cta.href} className="vb-cta-button">
+            {cta.label}
+          </Link>
+        ) : (
+          <a href={cta.href} className="vb-cta-button">
+            {cta.label}
+          </a>
+        )}
+      </aside>
     );
   }
 
@@ -175,6 +210,15 @@ export function createBlog(input: BlogConfig) {
                 <time dateTime={post.date}>{formatDate(post.date, config.locale)}</time>
                 <span aria-hidden>·</span>
                 <span>{labels.readingTime(post.readingMinutes)}</span>
+                {post.updated && post.updated !== post.date ? (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span>
+                      {labels.updated}{" "}
+                      <time dateTime={post.updated}>{formatDate(post.updated, config.locale)}</time>
+                    </span>
+                  </>
+                ) : null}
                 {post.draft ? <span className="vb-badge">{labels.draft}</span> : null}
               </div>
             </header>
@@ -183,6 +227,7 @@ export function createBlog(input: BlogConfig) {
               <img className="vb-cover" src={post.image} alt="" />
             ) : null}
             <div className="vb-prose">{content}</div>
+            {config.cta ? <Cta cta={config.cta} /> : null}
           </article>
           {config.sidebar ? <Sidebar post={post} toc={toc} /> : null}
         </div>
@@ -202,8 +247,10 @@ export function createBlog(input: BlogConfig) {
 
     /** `export default blog.PostPage` in `app/<basePath>/[slug]/page.tsx` */
     PostPage,
-    generateStaticParams: (): { slug: string }[] =>
-      store.getPosts().map((post) => ({ slug: post.slug })),
+    generateStaticParams: (): { slug: string }[] => {
+      const posts = store.getPosts();
+      return posts.length > 0 ? posts.map((post) => ({ slug: post.slug })) : [{ slug: EMPTY_SLUG }];
+    },
     generateMetadata: async ({ params }: SlugParams): Promise<Metadata> =>
       postMetadata(await findPost(params), config),
 

@@ -3,14 +3,18 @@
  * Plain CSS, no Tailwind required. Colors come from the host site's shadcn
  * variables when present and fall back to currentColor mixes otherwise.
  * Override any --vb-* or --sh-* variable on .vb-root to restyle.
+ *
+ * Defaults sit on :where(.vb-root) (specificity 0), so a `.vb-root { ... }` rule in the
+ * site's CSS always wins, no matter which stylesheet Next loads last.
  */
 
-.vb-root {
+:where(.vb-root) {
   --vb-fg: var(--foreground, currentColor);
   --vb-muted: var(--muted-foreground, color-mix(in oklab, currentColor 60%, transparent));
   --vb-border: var(--border, color-mix(in oklab, currentColor 14%, transparent));
   --vb-surface: var(--muted, color-mix(in oklab, currentColor 5%, transparent));
   --vb-link: var(--primary, currentColor);
+  --vb-ring: var(--ring, var(--vb-fg));
   --vb-radius: var(--radius, 0.625rem);
   /* Text column. Index and article share it, so both line up with a header of the same width. */
   --vb-width: 41rem;
@@ -140,7 +144,7 @@
 }
 
 @media (max-width: 640px) {
-  .vb-root {
+  :where(.vb-root) {
     padding-top: 2.5rem;
   }
 
@@ -151,7 +155,7 @@
 
 /* Post layout. The article keeps the index column; the sidebar sits in the right margin. */
 
-.vb-root.vb-post {
+:where(.vb-root.vb-post) {
   max-width: none;
 }
 
@@ -554,7 +558,7 @@
 }
 
 .vb-copy:focus-visible {
-  outline: 2px solid var(--ring, var(--vb-fg));
+  outline: 2px solid var(--vb-ring);
   outline-offset: -2px;
 }
 
@@ -656,6 +660,69 @@
 .vb-callout :where(code) {
   border-color: color-mix(in oklab, var(--vb-accent) 30%, transparent);
   background: color-mix(in oklab, var(--vb-accent) 10%, transparent);
+}
+
+/* Call to action below the post */
+
+/* Text left, button right; wraps below 18rem of text width. */
+.vb-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  margin-top: 3.5rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid color-mix(in oklab, var(--vb-fg) 16%, transparent);
+  border-radius: var(--vb-radius);
+  background: var(--vb-surface);
+}
+
+.vb-cta-copy {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.vb-cta-title {
+  margin: 0;
+  font-size: 1.1875rem;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.vb-cta-text {
+  margin: 0;
+  color: var(--vb-muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.vb-cta-button {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: calc(var(--vb-radius) * 0.8);
+  background: var(--vb-cta-bg, var(--vb-fg));
+  color: var(--vb-cta-fg, var(--background, #fff));
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.vb-cta-button:hover {
+  opacity: 0.88;
+}
+
+.vb-cta-button:focus-visible {
+  outline: 2px solid var(--vb-ring);
+  outline-offset: 2px;
 }
 
 .vb-prose :where(.footnotes) {

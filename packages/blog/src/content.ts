@@ -14,14 +14,15 @@ function fail(file: string, message: string): never {
   throw new Error(`[vibeblog] ${path.relative(process.cwd(), file)}: ${message}`);
 }
 
-function toDateString(value: unknown, file: string): string {
+function toDateString(value: unknown, key: string, file: string): string {
+  // YAML parses unquoted dates into Date objects.
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
     return value.toISOString().slice(0, 10);
   }
   if (typeof value === "string" && DATE_PATTERN.test(value.trim())) {
     return value.trim();
   }
-  return fail(file, `frontmatter "date" must be YYYY-MM-DD, got ${JSON.stringify(value)}`);
+  return fail(file, `frontmatter "${key}" must be YYYY-MM-DD, got ${JSON.stringify(value)}`);
 }
 
 function optionalString(value: unknown, key: string, file: string): string | undefined {
@@ -55,6 +56,13 @@ function readPost(file: string, config: ResolvedBlogConfig): Post {
   const draft = frontmatter.draft ?? false;
   if (typeof draft !== "boolean") fail(file, `frontmatter "draft" must be true or false`);
 
+  const date = toDateString(frontmatter.date, "date", file);
+  const updated =
+    frontmatter.updated === undefined || frontmatter.updated === null || frontmatter.updated === ""
+      ? undefined
+      : toDateString(frontmatter.updated, "updated", file);
+  if (updated && updated < date) fail(file, `frontmatter "updated" (${updated}) is before "date" (${date})`);
+
   const postPath = `${config.basePath}/${slug}`;
 
   return {
@@ -62,7 +70,9 @@ function readPost(file: string, config: ResolvedBlogConfig): Post {
     path: postPath,
     url: `${config.siteUrl}${postPath}`,
     title,
-    date: toDateString(frontmatter.date, file),
+    seoTitle: optionalString(frontmatter.seoTitle, "seoTitle", file),
+    date,
+    updated,
     description: optionalString(frontmatter.description, "description", file),
     image: optionalString(frontmatter.image, "image", file),
     author: optionalString(frontmatter.author, "author", file),

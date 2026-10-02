@@ -155,9 +155,11 @@ Every \`.mdx\` file in this folder is one post. The file name is the URL slug:
 
 \`\`\`yaml
 ---
-title: Post title            # required
-date: 2026-01-31             # required, YYYY-MM-DD
-description: One sentence.   # recommended, used for the list, SEO and RSS
+title: Post title            # required, the visible H1
+date: 2026-01-31             # required, YYYY-MM-DD, first publication
+updated: 2026-02-14          # optional, YYYY-MM-DD, set on real content changes
+description: One sentence.   # recommended, meta description, list and RSS
+seoTitle: Full <title> tag   # optional, when the search title differs from the H1
 image: /blog/cover.png       # optional, path below public/ or absolute URL
 author: Jane Doe             # optional
 draft: true                  # optional, hidden from production builds
@@ -175,6 +177,12 @@ draft: true                  # optional, hidden from production builds
 - \`import\` and \`export\` are disabled. Put images in \`public/\` and reference them by path.
 
 \`npm run build\` fails with the file name if a post has invalid frontmatter or MDX.
+
+## Publishing
+
+- New posts start with \`draft: true\`. A human removes it after review.
+- Keep the slug once a post is live. Renaming the file changes the URL and loses its ranking.
+- Bump \`updated\` only for real content changes, not for typo fixes.
 `,
   ],
 ];
@@ -188,6 +196,27 @@ import { blog } from "${importBlog(sitemapFile)}";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [{ url: blog.config.siteUrl }, ...blog.sitemap()];
+}
+`,
+  ]);
+}
+
+// robots.txt is per domain, so only create it when the site has none.
+const robotsFile = path.join(appDir, "robots.ts");
+const hasRobots = ["robots.ts", "robots.js", "robots.txt"].some((name) =>
+  existsSync(path.join(cwd, appDir, name)),
+) || existsSync(path.join(cwd, "public", "robots.txt"));
+if (!hasRobots) {
+  files.push([
+    robotsFile,
+    `import type { MetadataRoute } from "next";
+import { blog } from "${importBlog(robotsFile)}";
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: { userAgent: "*", allow: "/" },
+    sitemap: \`\${blog.config.siteUrl}/sitemap.xml\`,
+  };
 }
 `,
   ]);

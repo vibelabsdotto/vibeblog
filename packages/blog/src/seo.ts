@@ -1,12 +1,21 @@
 import type { Metadata, MetadataRoute } from "next";
 import type { Post, ResolvedBlogConfig } from "./types";
 
-function absolute(url: string, siteUrl: string): string {
+export function absoluteUrl(url: string, siteUrl: string): string {
   return new URL(url, `${siteUrl}/`).toString();
+}
+
+function postImage(post: Post, config: ResolvedBlogConfig): string | undefined {
+  return post.image ? absoluteUrl(post.image, config.siteUrl) : config.ogImage;
+}
+
+function lastModified(post: Post): string {
+  return post.updated ?? post.date;
 }
 
 export function indexMetadata(config: ResolvedBlogConfig): Metadata {
   const url = `${config.siteUrl}${config.basePath}`;
+  const images = config.ogImage ? [config.ogImage] : undefined;
   return {
     title: config.title,
     description: config.description || undefined,
@@ -14,30 +23,36 @@ export function indexMetadata(config: ResolvedBlogConfig): Metadata {
       canonical: url,
       types: { "application/rss+xml": `${url}/rss.xml` },
     },
-    openGraph: { type: "website", title: config.title, url },
+    // A page's `openGraph` replaces the layout's completely, so it carries its own image.
+    openGraph: { type: "website", title: config.title, description: config.description || undefined, url, images },
+    twitter: { card: images ? "summary_large_image" : "summary", title: config.title, images },
   };
 }
 
 export function postMetadata(post: Post, config: ResolvedBlogConfig): Metadata {
-  const images = post.image ? [absolute(post.image, config.siteUrl)] : undefined;
+  const image = postImage(post, config);
+  const images = image ? [image] : undefined;
   const author = post.author ?? config.author;
+  const socialTitle = post.seoTitle ?? post.title;
   return {
-    title: post.title,
+    // `absolute` skips the site's title template: an SEO title is written as the full string.
+    title: post.seoTitle ? { absolute: post.seoTitle } : post.title,
     description: post.description,
     authors: author ? [{ name: author }] : undefined,
     alternates: { canonical: post.url },
     openGraph: {
       type: "article",
-      title: post.title,
+      title: socialTitle,
       description: post.description,
       url: post.url,
       publishedTime: post.date,
+      modifiedTime: post.updated,
       authors: author ? [author] : undefined,
       images,
     },
     twitter: {
       card: images ? "summary_large_image" : "summary",
-      title: post.title,
+      title: socialTitle,
       description: post.description,
       images,
     },
@@ -52,9 +67,11 @@ export function postJsonLd(post: Post, config: ResolvedBlogConfig): string {
     headline: post.title,
     description: post.description,
     datePublished: post.date,
+    dateModified: lastModified(post),
     url: post.url,
     mainEntityOfPage: post.url,
-    image: post.image ? absolute(post.image, config.siteUrl) : undefined,
+    image: postImage(post, config),
+    inLanguage: config.locale,
     author: author ? { "@type": "Person", name: author } : undefined,
   };
   // `<` would let post content close the script tag.
@@ -88,6 +105,7 @@ export function renderRss(posts: Post[], config: ResolvedBlogConfig): string {
     </item>`,
     )
     .join("\n");
+  const newest = posts.map(lastModified).sort().at(-1);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
@@ -97,7 +115,7 @@ export function renderRss(posts: Post[], config: ResolvedBlogConfig): string {
     <description>${xml(config.description || config.title)}</description>
     <language>${xml(config.locale)}</language>
     <atom:link href="${xml(`${url}/rss.xml`)}" rel="self" type="application/rss+xml" />${
-      posts[0] ? `\n    <lastBuildDate>${rfc822(posts[0].date)}</lastBuildDate>` : ""
+      newest ? `\n    <lastBuildDate>${rfc822(newest)}</lastBuildDate>` : ""
     }
 ${items}
   </channel>
@@ -109,9 +127,8 @@ export function sitemapEntries(posts: Post[], config: ResolvedBlogConfig): Metad
   return [
     {
       url: `${config.siteUrl}${config.basePath}`,
-      lastModified: posts[0]?.date,
-      changeFrequency: "weekly",
+      lastModified: posts.map(lastModified).sort().at(-1),
     },
-    ...posts.map((post) => ({ url: post.url, lastModified: post.date })),
+    ...posts.map((post) => ({ url: post.url, lastModified: lastModified(post) })),
   ];
 }

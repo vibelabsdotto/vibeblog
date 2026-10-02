@@ -8,6 +8,8 @@ export type BlogLabels = {
   draft: string;
   rss: string;
   readingTime: (minutes: number) => string;
+  /** Prefix for the `updated` date in the post header. */
+  updated: string;
   noPosts: string;
   onThisPage: string;
   morePosts: string;
@@ -15,6 +17,16 @@ export type BlogLabels = {
   copied: string;
   /** Shown in the code bar when a fence has no language. */
   plainText: string;
+};
+
+/** Call to action rendered below every post. */
+export type BlogCta = {
+  title: string;
+  text?: string;
+  /** Button text. */
+  label: string;
+  /** Path on the site (`/pricing`) or absolute URL. */
+  href: string;
 };
 
 export type BlogConfig = {
@@ -34,6 +46,13 @@ export type BlogConfig = {
   labels?: Partial<BlogLabels>;
   /** Fallback author for JSON-LD and RSS when a post has none. */
   author?: string;
+  /**
+   * Open Graph image for the index and for posts without `image`. Path below `public/` or
+   * absolute URL. Needed because a page's `openGraph` replaces the layout's completely.
+   */
+  ogImage?: string;
+  /** Call to action below every post. */
+  cta?: BlogCta;
   /** Post sidebar with table of contents and more posts. Default: `true`. */
   sidebar?: boolean;
   /** Extra or replacement MDX components. Merged over the defaults. */
@@ -52,6 +71,9 @@ export type ResolvedBlogConfig = Required<
 > & {
   labels: BlogLabels;
   author?: string;
+  /** Absolute URL. */
+  ogImage?: string;
+  cta?: BlogCta;
   components: MDXComponents;
   remarkPlugins: NonNullable<MdxOptions["remarkPlugins"]>;
   /** User plugins only. The built-in ones are added per render. */
@@ -60,9 +82,14 @@ export type ResolvedBlogConfig = Required<
 
 /** Frontmatter accepted at the top of every post. */
 export type PostFrontmatter = {
+  /** The visible H1. */
   title: string;
+  /** Complete `<title>` and social title when it should differ from the H1. The site's title template is not applied. */
+  seoTitle?: string;
   /** `YYYY-MM-DD` */
   date: string;
+  /** `YYYY-MM-DD`, not before `date`. Feeds `dateModified`, `og:modified_time` and the sitemap. */
+  updated?: string;
   description?: string;
   /** Absolute URL or path below `public/`, used for the cover and Open Graph. */
   image?: string;
@@ -78,8 +105,11 @@ export type Post = {
   /** Absolute URL. */
   url: string;
   title: string;
+  seoTitle?: string;
   /** `YYYY-MM-DD` */
   date: string;
+  /** `YYYY-MM-DD` */
+  updated?: string;
   description?: string;
   image?: string;
   author?: string;
