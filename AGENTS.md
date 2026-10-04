@@ -17,3 +17,11 @@ npm-workspaces monorepo for `@vibelabsdotto/blog`, a drop-in MDX blog for Next.j
 - Read post files with sync `fs`. Next treats it as a predictable value while prerendering, which keeps `cacheComponents` sites working.
 - The stylesheet stays plain CSS on `.vb-*` classes and reads shadcn variables. Don't add Tailwind classes to package components; host sites don't scan `node_modules`.
 - Before publishing, run `npm pack --dry-run` in `packages/blog` and check the file list (dist, bin, README, LICENSE).
+
+## CI and npm releases
+
+- Woodpecker runs `.woodpecker/ci.yaml` on the existing `linux/amd64`, `role=release` worker. Pushes to `main` and manual reruns check types, build the package and example, pack the package, and verify the archive in a clean exact-commit publisher checkout. No npm write happens on a branch push.
+- Publishing requires an explicit stable `vVERSION` tag matching `packages/blog/package.json`. The tagged commit must belong to remote `main`. Version bumps and release tags require a release request; CI does not create either automatically. Keep `package-lock.json` in sync when changing the workspace version.
+- The repository-only Woodpecker secret `npm_token` is available only to tag events and injected only into the publish step, never dependency installation or builds. The publisher executes from a separate trusted checkout, treats build artifacts as data, and publishes the verified tarball with lifecycle scripts disabled.
+- A publish is successful only after the exact version, `latest` tag, and downloaded tarball bytes/SHA-512 match. Never blindly rerun an ambiguous publish or overwrite an existing version.
+- CI is at `https://ci.vibelabs.to/repos/4`. It waits if the laptop worker is offline. npm token `woodpecker-vibeblog-release` is scoped only to `@vibelabsdotto/blog` and expires on 2026-11-03. Rotate it before expiry. npm has announced removal of token-based direct publishing in January 2027; migrate the release authentication before then rather than broadening token rights.
